@@ -134,7 +134,7 @@ select {
 .logo path {
   fill: none;
   stroke: #4af626;
-  stroke-width: 7;
+  stroke-width: 4;
   stroke-linecap: round;
 }
 .picker {

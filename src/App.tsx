@@ -167,11 +167,11 @@ export function App() {
         <div className="brand">
           <a className="logo" href="https://v01d.dev" target="_blank" rel="noopener noreferrer" aria-label="v01d.dev">
             {/* v01d's slashed-circle logo (the static logo.svg from v01d.dev), with
-                strokes thickened so it stays legible at header size. */}
+                strokes a little heavier than the original so it stays crisp at header size. */}
             <svg viewBox="0 0 100 100" width="30" height="30" aria-hidden>
               <rect width="100" height="100" rx="22" />
-              <circle cx="50" cy="50" r="27" />
-              <path d="M19 81 81 19" />
+              <circle cx="50" cy="50" r="34" />
+              <path d="M10 90 90 10" />
             </svg>
           </a>
           <h1>DecodeTree</h1>
