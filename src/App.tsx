@@ -1,3 +1,4 @@
+import type React from 'react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { CIRCUITS } from './circuits'
 import { simulate, truthTable, type CircuitDef, type Values } from './sim'
@@ -76,6 +77,55 @@ export function App() {
   }, [circuit])
 
   const scale = zoom === 'fit' ? fitScale : zoom
+  const scaleRef = useRef(scale)
+  scaleRef.current = scale
+
+  // Pinch to zoom the schematic on touch screens. One finger still scrolls
+  // natively; two fingers zoom around their midpoint.
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    type Pinch = { dist: number; scale: number; mx: number; my: number; sl: number; st: number }
+    let pinch: Pinch | null = null
+    const span = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 2) return
+      const r = el.getBoundingClientRect()
+      pinch = {
+        dist: span(e.touches),
+        scale: scaleRef.current,
+        mx: (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left,
+        my: (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top,
+        sl: el.scrollLeft,
+        st: el.scrollTop,
+      }
+    }
+    const onMove = (e: TouchEvent) => {
+      if (!pinch || e.touches.length !== 2) return
+      e.preventDefault()
+      const p = pinch
+      const next = Math.min(3, Math.max(0.2, (p.scale * span(e.touches)) / p.dist))
+      setZoom(+next.toFixed(3))
+      const k = next / p.scale
+      requestAnimationFrame(() => {
+        el.scrollLeft = (p.sl + p.mx) * k - p.mx
+        el.scrollTop = (p.st + p.my) * k - p.my
+      })
+    }
+    const onEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinch = null
+    }
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd)
+    el.addEventListener('touchcancel', onEnd)
+    return () => {
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
+      el.removeEventListener('touchcancel', onEnd)
+    }
+  }, [])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -137,6 +187,22 @@ export function App() {
             </div>
           ))}
         </nav>
+        <select
+          className="picker-select"
+          value={circuitId}
+          onChange={(e) => select(e.target.value)}
+          aria-label="Circuit"
+        >
+          {groups.map(([g, cs]) => (
+            <optgroup key={g} label={g}>
+              {cs.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
         <div className="theme">
           <span className="credit">
             Made by{' '}
@@ -200,7 +266,10 @@ export function App() {
             </div>
           </div>
 
-          <div className="stage-wrap">
+          <div
+            className="stage-wrap"
+            style={{ '--aspect': circuit.drawing.height / circuit.drawing.width } as React.CSSProperties}
+          >
             <div className="stage" ref={stageRef}>
               <Schematic drawing={circuit.drawing} values={values} scale={scale} onToggle={toggle} />
             </div>
@@ -216,7 +285,11 @@ export function App() {
               </button>
             </div>
           </div>
-          <p className="hint">
+          <p className="hint touch-only">
+            Tap an input pin (the square boxes) or the buttons above to poke it. Pinch or use − / + to zoom, and drag to
+            move around. Tap a truth-table row to apply it.
+          </p>
+          <p className="hint pointer-only">
             Click an input pin (the square boxes) to poke it, like Logisim’s poke tool. Keys:{' '}
             {circuit.inputs.length > 1 ? (
               <>
@@ -240,7 +313,8 @@ export function App() {
         <section className="panel table-panel">
           <div className="panel-head">
             <h2>Truth table</h2>
-            <span className="muted small">Click a row to apply it</span>
+            <span className="muted small pointer-only">Click a row to apply it</span>
+            <span className="muted small touch-only">Tap a row to apply it</span>
           </div>
           <TruthTable circuit={circuit} rows={rows} values={inputs} onPick={(a) => setInputs({ ...defaults(circuit), ...inputs, ...a })} />
         </section>

@@ -120,7 +120,9 @@ export function Schematic({ drawing: d, values, scale, onToggle }: Props) {
               }
             }}
           >
-            <rect x={x - 28} y={y - 13} width={26} height={26} rx={4} />
+            {/* Larger invisible hit area so the pin stays tappable when zoomed out. */}
+            <rect x={x - 46} y={y - 22} width={50} height={44} className="hit" />
+            <rect x={x - 28} y={y - 13} width={26} height={26} rx={4} className="box" />
             <text x={x - 15} y={y + 5} textAnchor="middle" className="pin-val">
               {isOn ? 1 : 0}
             </text>
