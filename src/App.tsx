@@ -41,6 +41,9 @@ export function App() {
     setCircuitId(id)
     setInputs(defaults(c))
     window.history.replaceState(null, '', `#${id}`)
+    // Which circuits get used in class. An explicit path skips the host-prefix
+    // function in index.html, so the host is added here.
+    window.goatcounter?.count?.({ path: `${location.host}/circuit/${id}`, title: c.title, event: true })
   }, [])
 
   const toggle = useCallback((sig: string) => setInputs((v) => ({ ...v, [sig]: v[sig] ? 0 : 1 })), [])
@@ -135,7 +138,12 @@ export function App() {
           ))}
         </nav>
         <div className="theme">
-          <span className="credit">Made by v01d.dev</span>
+          <span className="credit">
+            Made by{' '}
+            <a href="https://v01d.dev" target="_blank" rel="noopener noreferrer">
+              v01d.dev
+            </a>
+          </span>
           <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Theme">
             <option value="auto">Auto theme</option>
             <option value="light">Light</option>
