@@ -165,12 +165,15 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="logo" aria-hidden>
-            <svg viewBox="0 0 32 32" width="26" height="26">
-              <rect width="32" height="32" rx="7" />
-              <path d="M9 8h7a8 8 0 0 1 0 16H9z" />
+          <a className="logo" href="https://v01d.dev" target="_blank" rel="noopener noreferrer" aria-label="v01d.dev">
+            {/* v01d's slashed-circle logo (the static logo.svg from v01d.dev), with
+                strokes thickened so it stays legible at header size. */}
+            <svg viewBox="0 0 100 100" width="30" height="30" aria-hidden>
+              <rect width="100" height="100" rx="22" />
+              <circle cx="50" cy="50" r="27" />
+              <path d="M19 81 81 19" />
             </svg>
-          </span>
+          </a>
           <h1>DecodeTree</h1>
         </div>
         <nav className="picker" aria-label="Circuits">

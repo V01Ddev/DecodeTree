@@ -119,13 +119,23 @@ select {
   margin: 0;
   letter-spacing: -0.01em;
 }
-.logo rect {
-  fill: var(--accent);
+.logo {
+  display: inline-flex;
+  border-radius: 7px;
 }
+.logo svg {
+  display: block;
+}
+/* v01d.dev's brand green on a dark tile, in both themes. */
+.logo rect {
+  fill: #121512;
+}
+.logo circle,
 .logo path {
   fill: none;
-  stroke: var(--accent-ink);
-  stroke-width: 2.6;
+  stroke: #4af626;
+  stroke-width: 7;
+  stroke-linecap: round;
 }
 .picker {
   display: flex;
