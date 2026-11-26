@@ -1,19 +1,26 @@
-name: CI
+name: CI/CD
 
-# Verifies every push and pull request. Deploys are handled by Vercel's Git
-# integration: main goes to production, other branches and PRs get previews.
+# Every push and PR is built and checked. Pushes to main deploy to production;
+# PRs from this repo get a Vercel preview deployment. Vercel's own Git
+# deployments are switched off in vercel.json so nothing deploys twice.
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
 
+# Supersede in-flight runs on branches and PRs, but never cancel a production
+# deploy that is already talking to Vercel.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
   build:
@@ -34,3 +41,47 @@ jobs:
 
       # Simulates every circuit against its expected truth table.
       - run: npm run check
+
+  deploy:
+    needs: build
+    # Production on main (push or manual run); previews only for PRs from this
+    # repo, since fork PRs don't get the secrets.
+    if: >-
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      # The Vercel CLI comes from devDependencies, so the version is pinned by
+      # the lockfile rather than whatever npx would fetch.
+      - run: npm ci
+
+      - name: Set deploy target
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "TARGET=preview" >> "$GITHUB_ENV"; echo "PROD=" >> "$GITHUB_ENV"
+          else
+            echo "TARGET=production" >> "$GITHUB_ENV"; echo "PROD=--prod" >> "$GITHUB_ENV"
+          fi
+
+      - name: Pull Vercel project settings
+        run: npx vercel pull --yes --environment="$TARGET" --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Build with Vercel
+        run: npx vercel build $PROD --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(npx vercel deploy --prebuilt $PROD --token="${{ secrets.VERCEL_TOKEN }}")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $url" >> "$GITHUB_STEP_SUMMARY"
