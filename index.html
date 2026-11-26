@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/x-icon" href="./favicon.ico" />
     <title>DecodeTree</title>
-    <!-- GoatCounter (cookieless). Paths are prefixed with the host so this site
-         stays separate from v01d.dev in the shared v01d dashboard. -->
+    <!-- GoatCounter (cookieless). Paths are always prefixed with
+         decodetree.v01d.dev, whatever host serves the page (preview URLs,
+         *.vercel.app, etc.), so every hit lands under that one name in the
+         shared v01d dashboard. -->
     <script>
-      window.goatcounter = { path: function (p) { return location.host + p } }
+      window.goatcounter = { path: function (p) { return 'decodetree.v01d.dev' + p } }
     </script>
     <script data-goatcounter="https://v01d.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   </head>
